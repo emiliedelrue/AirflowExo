@@ -1,0 +1,28 @@
+Q1
+LocalExecutor exécute les tâches en parallèle sur une seule machine. Il est adapté au développement local et aux pipelines legère. (scalabilité faible)
+CeleryExecutor distribue les tâches sur plusieurs workers via une file de messages (Redis ou RabbitMQ). Il permet la scalabilité horizontale. C'est l'architecture adaptée à RTE en production avec des pipelines quotidiens sur plusieurs régions. (scalabilité moyen)
+KubernetesExecutor crée un pod Kubernetes par tâche, puis le détruit après exécution. Il n'y a pas de broker. Chaque tâche est totalement isolée et les ressources sont allouées dynamiquement. C'est la meilleur option pour un environnement cloud. (scalabilité forte)
+
+Q2
+Le bind mount lie directement un répertoire de la machine hôte à un chemin dans le conteneur. Lorsqu'on modifie un fichier sur l'hôte est visible dans le conteneur. 
+Le volume nommé est géré entièrement par Docker et non lié à un chemin hôte.
+Sans ce mapping, les DAGs doivent être copiés dans l'image Docker au moment du build. 
+Toute modification nécessiterait un docker-compose up --build.
+En production sur un cluster Airflow multi-nœuds, le bind mount ne suffit plus car chaque worker tourne sur une machine différente. Il faut utiliser un stockage partagé.
+
+Q3
+Avec catchup=True et un start_date au 1er janvier 2024, Airflow déclencherait automatiquement un DAG run pour chaque jour manqué depuis le 1er janvier 2024 jusqu'à aujourd'hui. Cela surchargerait les APIs et la base de données.
+L'idempotence signifie qu'exécuter un DAG plusieurs fois avec les mêmes paramètres produit toujours le même résultat. 
+C'est critique pour RTE : si un pipeline de collecte est relancé après un échec, il ne doit pas créer de doublons ni corrompre les données existantes.
+
+Pour rendre collecter_* idempotentes :
+ - Toujours filtrer les données par date d'exécution plutôt que "aujourd'hui"
+ - Écraser les données existantes plutôt qu'ajouter
+ - Nommer les fichiers de sortie avec la date d'exécution
+
+
+Q4
+Le paramètre timezone=Europe/Paris est essentiel car les données éCO2mix sont horodatées en heure locale française. Sans ce paramètre, les timestamps seraient interprétés en UTC, décalant toutes les mesures de +1h ou +2h.
+Lors du passage à l'heure d'été, une heure est sautée. Si le scheduler Airflow est configuré en UTC et que les requêtes API utilisent Europe/Paris sans gestion explicite du DST, plusieurs problèmes peuvent survenir :
+ - Données manquantes : le créneau 2h00-3h00 n'existe pas en heure locale ce jour-là. Une requête qui filtre heure = '02:30' ne retournera aucun enregistrement.
+ - Données dupliquées : heure d'hiver, le créneau 2h00-3h00 existe deux fois. Une agrégation naïve doublerait les valeurs de production sur cette heure.
