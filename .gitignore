@@ -4,3 +4,4 @@ __pycache__/
 .env
 postgres-db-volume/
 airflow_env/
+config/
