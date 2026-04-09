@@ -1,0 +1,18 @@
+Q1
+HDFS est préférable pour 50 Go/jour car il : 
+ - distribue les données sur plusieurs machines
+ - réplique automatiquement les blocs pour éviter la perte de données
+ - permet le traitement local des données via Spark/MapReduce sans transfert réseau
+
+Q2
+Si le NameNode tombe, les DataNodes continuent de stocker les données mais aucun client ne peut lire ou écrire. 
+Hadoop utilise le NameNode HA. Ce sont deux NameNodes actif/passif synchronisés via des JournalNodes qui partagent les modifications de métadonnées en temps réel.
+
+Q3
+Le mode poke occupe un worker en permanence. 
+Le mode reschedule libère le worker entre chaque vérification. 
+Avec CeleryExecutor qui a un nombre limité de workers, un sensor en mode poke qui attend 8 heures bloquerait un worker inutilement et pourrait empêcher d'autres tâches de s'exécuter.
+
+Q4 
+Lors de l'écriture d'un bloc de 128 Mo avec réplication 3 : le client écrit vers le DataNode 1, qui réplique vers le DataNode 2, qui réplique vers le DataNode 3 en pipeline. 
+HDFS garantit la cohérence en write-once : un fichier en cours d'écriture n'est pas visible pour les lecteurs jusqu'à ce qu'il soit fermé.
