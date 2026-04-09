@@ -5,6 +5,7 @@ import pendulum
 import requests
 import logging
 import json
+import time
 from datetime import date
 
 local_tz = pendulum.timezone("Europe/Paris")
@@ -39,11 +40,12 @@ default_args = {
     "email_on_failure": False,
     "retries": 2,
     "retry_delay": timedelta(minutes=5),
-    "sla": timedelta(minutes=90),
+    "sla": timedelta(seconds=1),
 }
 
 
 def verifier_apis(**context):
+    time.sleep(120) 
     apis = {
         "Open-Meteo": (
             "https://api.open-meteo.com/v1/forecast"
@@ -247,7 +249,7 @@ with DAG(
     t5 = PythonOperator(
         task_id="generer_rapport_energie",
         python_callable=generer_rapport_energie,
-        sla=timedelta(minutes=5),
+        sla=timedelta(seconds=1),
     )
 
     t1 >> [t2, t3] >> t4 >> t5
