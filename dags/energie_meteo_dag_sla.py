@@ -221,7 +221,7 @@ with DAG(
     start_date=datetime(2024, 1, 1, tzinfo=local_tz),
     catchup=False,
     tags=["rte", "energie", "meteo", "sla"],
-    sla_miss_callback=sla_miss_callback,  # callback SLA sur le DAG
+    sla_miss_callback=sla_miss_callback, 
 ) as dag:
 
     t1 = PythonOperator(
@@ -244,11 +244,10 @@ with DAG(
         python_callable=analyser_correlation,
     )
 
-    # SLA de 45 minutes spécifique sur la tâche finale
     t5 = PythonOperator(
         task_id="generer_rapport_energie",
         python_callable=generer_rapport_energie,
-        sla=timedelta(minutes=45),
+        sla=timedelta(minutes=5),
     )
 
     t1 >> [t2, t3] >> t4 >> t5
