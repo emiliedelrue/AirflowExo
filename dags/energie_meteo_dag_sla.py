@@ -39,7 +39,7 @@ default_args = {
     "email_on_failure": False,
     "retries": 2,
     "retry_delay": timedelta(minutes=5),
-    "sla": timedelta(minutes=90),  # SLA global sur toutes les tâches
+    "sla": timedelta(minutes=90),
 }
 
 
