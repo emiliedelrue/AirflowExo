@@ -5,3 +5,4 @@ __pycache__/
 postgres-db-volume/
 airflow_env/
 config/
+.DS_Store

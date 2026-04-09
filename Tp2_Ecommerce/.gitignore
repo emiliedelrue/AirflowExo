@@ -11,3 +11,4 @@ hadoop_namenode/
 hadoop_datanode/
 *.cfg
 *.db
+.DS_Store
